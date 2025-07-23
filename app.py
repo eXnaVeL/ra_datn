@@ -1,4 +1,4 @@
-# app.py OK (Modified - Removed inline editing)
+# app.py OK (Modified - Fix for "RUN PROGRAM" button not enabling)
 
 import customtkinter
 import tkinter as tk
@@ -17,7 +17,7 @@ from gui import widgets
 
 class App(customtkinter.CTk):
     # ==========================================================
-    # HẰNG SỐ CHUYỂN ĐỔI
+    # HẰNG SỐ CHUYỀN ĐỔI
     # ==========================================================
     DEG_TO_PULSE_FACTOR = 40.0
 
@@ -55,7 +55,6 @@ class App(customtkinter.CTk):
         # Biến cho Waypoints (lưu bằng độ)
         self.waypoints = []
         self.selected_waypoint_index = None
-        # self.editing_waypoint_index = None # LOẠI BỎ: Không cần cho inline editing
 
         # Biến cho danh sách chương trình (lưu bằng độ)
         # Sẽ là dictionary của các tên chương trình và meta-data (vd: ngày tạo)
@@ -116,6 +115,7 @@ class App(customtkinter.CTk):
         self.load_settings()
         self._load_default_programs()  # Tải các chương trình riêng lẻ từ thư mục
 
+        # Lần gọi đầu tiên, UI sẽ cập nhật dựa trên trạng thái ban đầu (chưa kết nối, chưa homed)
         self.update_ui_state()
         self.update_position_labels()
         self._send_speed_to_arduino()
@@ -200,6 +200,7 @@ class App(customtkinter.CTk):
         if self.controller.is_connected:
             self.controller.disconnect()
             self.update_status("Đã ngắt kết nối.")
+            self.is_homed = False  # Reset homed state on disconnect
         else:
             port = self.port_combobox.get()
             if not port:
@@ -211,6 +212,10 @@ class App(customtkinter.CTk):
                 self.update_status(message)
                 self.last_used_port.set(port)
                 self._send_speed_to_arduino()
+
+                # Yêu cầu mới: Tự động homing khi kết nối thành công
+                # Gọi start_homing sau một khoảng trễ nhỏ để UI có thời gian cập nhật trạng thái kết nối
+                self.after(100, self.start_homing)
             else:
                 self.update_status(f"Lỗi kết nối: {message}")
         self.update_ui_state()
@@ -490,7 +495,7 @@ class App(customtkinter.CTk):
                 insert_index, {"name": name, "pos": pos, "type": "position"})
         elif wp_type == "delay":
             if name is None:
-                name = f"Delay"  # Tên mặc định cho delay, để người dùng chỉnh sửa
+                name = f"Delay"
             self.waypoints.insert(
                 insert_index, {"name": name, "type": "delay", "duration_ms": duration_ms})
 
@@ -505,7 +510,7 @@ class App(customtkinter.CTk):
             pos_deg = {axis: float(self.manual_pos_entry[axis].get()) for axis in [
                 "X", "Y", "Z"]}
             self.add_waypoint(
-                f"Manual", pos_deg)  # Đặt tên mặc định "Manual", cho phép chỉnh sửa
+                f"Manual", pos_deg)
         except ValueError:
             messagebox.showerror(
                 "Lỗi", "Vui lòng nhập giá trị số hợp lệ cho góc (độ).")
@@ -644,7 +649,7 @@ class App(customtkinter.CTk):
             frame = customtkinter.CTkFrame(self.waypoint_scroll_frame)
             frame.pack(fill="x", padx=5, pady=2)
 
-            # Chế độ hiển thị bình thường
+            # Định dạng hiển thị
             if wp.get("type", "position") == "position":
                 pos_str = f"X:{wp['pos']['X']:.2f}° Y:{wp['pos']['Y']:.2f}° Z:{wp['pos']['Z']:.2f}°"
                 # Định dạng mới: name | (X Y Z)
@@ -883,6 +888,8 @@ class App(customtkinter.CTk):
             self.tab_view.set("Program")
             self.update_status(
                 f"Đã tải chương trình '{self.selected_program_name}'.")
+            # Kích hoạt lại UI sau khi tải chương trình để nút RUN PROGRAM được bật
+            self.update_ui_state()
         except Exception as e:
             messagebox.showerror(
                 "Lỗi tải chương trình", f"Không thể tải chương trình '{self.selected_program_name}': {e}")
@@ -1134,7 +1141,6 @@ class App(customtkinter.CTk):
                         state="normal" if enable_manual_and_program_control else "disabled")
 
         # Cập nhật trạng thái các nút trên tab "Program"
-        # Bây giờ không có inline editing, nên không cần điều kiện self.editing_waypoint_index
         program_buttons_state = "normal" if enable_manual_and_program_control else "disabled"
 
         if self.save_current_pos_button:
@@ -1159,7 +1165,7 @@ class App(customtkinter.CTk):
         if self.move_waypoint_down_button:
             self.move_waypoint_down_button.configure(
                 state="normal" if enable_manual_and_program_control and self.selected_waypoint_index is not None and self.selected_waypoint_index < len(self.waypoints) - 1 else "disabled")
-        if self.edit_selected_waypoint_button:  # Nút "Edit Selected" vẫn mở hộp thoại riêng
+        if self.edit_selected_waypoint_button:
             self.edit_selected_waypoint_button.configure(
                 state="normal" if enable_manual_and_program_control and self.selected_waypoint_index is not None else "disabled")
         if self.duplicate_selected_waypoint_button:
@@ -1186,7 +1192,7 @@ class App(customtkinter.CTk):
 
         # Nút RUN PROGRAM/STOP PROGRAM
         self.run_button.configure(text="STOP PROGRAM" if self.is_running_program else "RUN PROGRAM", fg_color=("#D32F2F", "#B71C1C") if self.is_running_program else (
-            "#1F6AA5", "#144870"), hover_color=("#B71C1C", "#8B0000") if self.is_running_program else ("#144870", "#103957"))
+            "#3E90CF", "#3E90CF"), hover_color=("#B71C1C", "#8B0000") if self.is_running_program else ("#10456B", "#10456B"))
 
         # Chỉ cho phép chạy nếu có kết nối, đã homing và có ít nhất 1 waypoint
         if is_connected and self.is_homed and len(self.waypoints) > 0:
