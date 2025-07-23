@@ -9,9 +9,9 @@ from datetime import datetime
 
 # Import các module đã tạo
 from controller import CNCController
-from dialogs import EditWaypointDialog
-from delay_dialogs import DelayEditDialog
-import widgets
+from gui.dialogs import EditWaypointDialog
+from gui.delay_dialogs import DelayEditDialog
+from gui import widgets
 
 
 class App(customtkinter.CTk):
