@@ -1,5 +1,6 @@
 // CNCLogic_Accel.h
 
+
 #ifndef CNCLOGIC_H
 #define CNCLOGIC_H
 
