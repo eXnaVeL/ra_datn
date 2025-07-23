@@ -1,4 +1,4 @@
-# gui/delay_dialogs.py OK
+# gui/delay_dialogs.py OK (Modified to edit name)
 
 import customtkinter
 import tkinter as tk
@@ -6,20 +6,26 @@ from tkinter import messagebox
 
 
 class DelayEditDialog(customtkinter.CTkToplevel):
-    def __init__(self, parent, duration_ms):
+    def __init__(self, parent, waypoint_name, duration_ms):
         super().__init__(parent)
         self.title("Edit Delay Waypoint")
-        self.geometry("300x150")
-        self._center_window(300, 150)
+        self.geometry("300x200")  # Tăng kích thước để có chỗ cho tên
+        self._center_window(300, 200)
         self.transient(parent)
         self.grab_set()
         self.result = None
 
+        self.name_var = tk.StringVar(
+            value=waypoint_name)  # Thêm StringVar cho tên
         self.duration_ms_var = tk.StringVar(
-            value=str(float(duration_ms)))  # Sử dụng StringVar
+            value=str(float(duration_ms)))
+
+        customtkinter.CTkLabel(self, text="Name:").pack(pady=5)
+        customtkinter.CTkEntry(
+            self, textvariable=self.name_var).pack(padx=20, fill="x")
 
         customtkinter.CTkLabel(
-            self, text="Duration (milliseconds):").pack(pady=10)
+            self, text="Duration (milliseconds):").pack(pady=5)
         customtkinter.CTkEntry(
             self, textvariable=self.duration_ms_var).pack(padx=20, fill="x")
 
@@ -43,16 +49,21 @@ class DelayEditDialog(customtkinter.CTkToplevel):
 
     def save(self):
         try:
-            # Lấy giá trị từ StringVar và chuyển đổi
             duration_ms_float = float(self.duration_ms_var.get())
+            waypoint_name = self.name_var.get().strip()
 
             if duration_ms_float < 1:
                 messagebox.showerror(
                     "Invalid Input", "Duration must be at least 1 millisecond.", parent=self)
                 return
 
+            if not waypoint_name:
+                messagebox.showerror(
+                    "Invalid Input", "Name cannot be empty.", parent=self)
+                return
+
             self.result = {
-                "name": f"Delay {duration_ms_float:.0f}ms",
+                "name": waypoint_name,
                 "type": "delay",
                 "duration_ms": int(duration_ms_float)
             }

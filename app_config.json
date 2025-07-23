@@ -1,0 +1,9 @@
+{
+    "last_used_port": "COM5",
+    "speed_percentage": 100,
+    "soft_limits": {
+        "X": "-265",
+        "Y": "150",
+        "Z": "-150"
+    }
+}

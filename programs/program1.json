@@ -1,0 +1,47 @@
+{
+    "waypoints": [
+        {
+            "name": "Waypoint 1",
+            "pos": {
+                "X": 0.0,
+                "Y": 15.0,
+                "Z": -35.0
+            },
+            "type": "position"
+        },
+        {
+            "name": "Delay 0.2s",
+            "type": "delay",
+            "duration_ms": 200
+        },
+        {
+            "name": "Waypoint 2",
+            "pos": {
+                "X": 0.0,
+                "Y": 55.0,
+                "Z": -55.0
+            },
+            "type": "position"
+        },
+        {
+            "name": "Delay 0.2s",
+            "type": "delay",
+            "duration_ms": 200
+        },
+        {
+            "name": "Waypoint 3",
+            "pos": {
+                "X": 0.0,
+                "Y": 15.0,
+                "Z": -35.0
+            },
+            "type": "position"
+        },
+        {
+            "name": "Delay 0.2s",
+            "type": "delay",
+            "duration_ms": 200
+        }
+    ],
+    "created": "2025-07-23 19:43:53"
+}
